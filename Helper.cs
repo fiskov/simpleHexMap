@@ -101,7 +101,7 @@ namespace simpleHexMap
         /// </summary>
         internal static void LoadField(string fileName)
         {
-            Array.Clear(field, 0, field.Length);
+            field = Enumerable.Repeat(0xFF, field.Length).ToArray();
 
             int offset = 0;
 
@@ -137,7 +137,7 @@ namespace simpleHexMap
             scale = _scale;
             divider = _divider;
 
-            height = posMax / width / divider;
+            height = (int)Math.Ceiling((double)posMax / width / divider);
 
             pb.Size = GetFieldSize();
             pb.Image = DrawField();
