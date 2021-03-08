@@ -5,6 +5,7 @@ namespace simpleHexMap
 {
     public partial class fMain : Form
     {
+        private static string fileName = "";
         public fMain()
         {
             InitializeComponent();
@@ -22,9 +23,11 @@ namespace simpleHexMap
         private void fMain_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            var fileName = files[0];
+            fileName = files[0];
             this.Text = fileName;
-            Helper.LoadField(fileName);
+            var size = Helper.LoadField(fileName);
+            tsStatusSize.Text = size.ToString() + " Bytes | ";
+
             this.updateImage();
         }
 
@@ -56,6 +59,14 @@ namespace simpleHexMap
         private void Img_MouseMove(object sender, MouseEventArgs e)
         {
             tsStatus.Text = Helper.GetValue(e.X, e.Y);
+        }
+
+        private void btnReload_Click(object sender, EventArgs e)
+        {
+            var size = Helper.LoadField(fileName);
+            tsStatusSize.Text = size.ToString() + " Bytes | ";
+
+            this.updateImage();
         }
     }
 }

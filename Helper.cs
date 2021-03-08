@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace simpleHexMap
@@ -13,12 +11,12 @@ namespace simpleHexMap
         private static int scale = 5, divider = 1;
         private const int sizeMax = 1024*1024;
 
-        private static int[] field = new int[sizeMax+1];
+        private static byte[] field = new byte[sizeMax+1];
 
         private static Bitmap bmp = new Bitmap(512 * scale, sizeMax/512 * scale);
         private static int width = 256, height = 0, posMax = 0;
 
-        internal static void PutPoint(int pos, int value)
+        internal static void PutPoint(int pos, byte value)
         {
             if (pos >= sizeMax) return;
             if (pos > posMax) posMax = pos;
@@ -54,12 +52,12 @@ namespace simpleHexMap
         internal static Bitmap DrawField()
         {
             int lineTop = 0x10000 / width / divider;
-            int size = width * height; //высота уже с делителем
+            int size = width * height; // height with divider
             using (Graphics graph = Graphics.FromImage(bmp))
             {
                 graph.Clear(Color.White);
 
-                //цветные квадратики
+                // colored squares
                 for (int i = 0; i < size; i++)
                 {
                     int v = field[i * divider];
@@ -68,7 +66,7 @@ namespace simpleHexMap
                     graph.FillRectangle(GetBrushColor(v), GetRect(i));
                 }
 
-                //линия каждые 0x10000
+                //red line every 0x10000 (64 kB)
                 Pen pen = new Pen(Color.HotPink, 2);
                 for (int i=1; i < size / 0x10000 / divider; i++)
                     graph.DrawLine(pen, 
@@ -95,21 +93,31 @@ namespace simpleHexMap
             return "Addr: 0x"+addr.ToString("X")+", Value: 0x"+value.ToString("X");
         }
 
+        internal static uint LoadField(string fileName)
+        {
+            String ext = Path.GetExtension(fileName).ToUpper();
+
+            //clear field
+            posMax = 0;
+            field = Enumerable.Repeat((byte)0xFF, field.Length).ToArray();
+
+            if (ext == ".HEX") LoadFieldHex(fileName);
+            if (ext == ".BIN") LoadFieldBin(fileName);
+
+            return (uint)posMax;
+        }
 
         /// <summary>
-        /// Загружает .hex файл в массив
+        /// Load .hex file to array
         /// </summary>
-        internal static void LoadField(string fileName)
-        {
-            field = Enumerable.Repeat(0xFF, field.Length).ToArray();
-
+        internal static void LoadFieldHex(string fileName)
+        {          
             int offset = 0;
 
             string[] lines = System.IO.File.ReadAllLines(fileName);
 
             foreach (string line in lines)
             {
-
                 if (line[0] == ':')
                 {
                     switch (Convert.ToInt32(line.Substring(7, 2), 16))
@@ -120,7 +128,7 @@ namespace simpleHexMap
 
                             for (int i = 0; i < len; i++)
                                 Helper.PutPoint(offset + addr + i,
-                                    Convert.ToInt32(line.Substring(9 + i * 2, 2), 16));
+                                    Convert.ToByte(line.Substring(9 + i * 2, 2), 16));
                             break;
                         case 2:
                             offset = Convert.ToInt32(line.Substring(9, 4), 16) * 16;
@@ -128,6 +136,16 @@ namespace simpleHexMap
                     }
                 }
             }            
+        }
+
+        /// <summary>
+        /// Load .bin file to array
+        /// </summary>
+        internal static void LoadFieldBin(string fileName)
+        {
+            Byte[] array = File.ReadAllBytes(fileName);
+            int addr = 0;
+            foreach (var b in array) PutPoint(addr++, b);
         }
 
         public static void DrawHexField(this PictureBox pb, 
