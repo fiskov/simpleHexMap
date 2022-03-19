@@ -10,7 +10,7 @@ namespace simpleHexMap
         {
             InitializeComponent();
 
-            cbSize.SelectedIndex = 1;
+            cbCellSize.SelectedIndex = 1;
             cbWidth.SelectedIndex = 1;
             tsStatus.Text = "";
         }
@@ -36,7 +36,7 @@ namespace simpleHexMap
             int divider = 1;
             if (chk16.Checked == true) divider = 2;
             int width = int.Parse(cbWidth.Text);
-            int pointSize = int.Parse(cbSize.Text);
+            int pointSize = int.Parse(cbCellSize.Text);
 
             Img.DrawHexField(width, pointSize, divider);
         }
@@ -48,12 +48,12 @@ namespace simpleHexMap
 
         private void cbSize_TextChanged(object sender, EventArgs e)
         {
-            if (cbSize.Text != "" && cbWidth.Text != "") updateImage();
+            if (cbCellSize.Text != "" && cbWidth.Text != "") updateImage();
         }
 
         private void cbWidth_TextChanged(object sender, EventArgs e)
         {
-            if (cbSize.Text != "" && cbWidth.Text != "") updateImage();
+            if (cbCellSize.Text != "" && cbWidth.Text != "") updateImage();
         }
 
         private void Img_MouseMove(object sender, MouseEventArgs e)
@@ -63,10 +63,15 @@ namespace simpleHexMap
 
         private void btnReload_Click(object sender, EventArgs e)
         {
+            Cursor.Current = Cursors.WaitCursor;
+            Application.DoEvents();
+
             var size = Helper.LoadField(fileName);
             tsStatusSize.Text = size.ToString() + " Bytes | ";
 
             this.updateImage();
+
+            Cursor.Current = Cursors.Default;
         }
     }
 }

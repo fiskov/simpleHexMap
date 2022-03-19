@@ -9,17 +9,17 @@ namespace simpleHexMap
     public static class Helper
     {
         private static int scale = 5, divider = 1;
-        private const int sizeMax = 1024*1024;
+        private const int sizeMax = 2048*2048;
 
         private static byte[] field = new byte[sizeMax+1];
 
-        private static Bitmap bmp = new Bitmap(512 * scale, sizeMax/512 * scale);
+        private static Bitmap bmp = new Bitmap(2048 * scale, sizeMax/2048 * scale);
         private static int width = 256, height = 0, posMax = 0;
 
         internal static void PutPoint(int pos, byte value)
         {
             if (pos >= sizeMax) return;
-            if (pos > posMax) posMax = pos;
+            posMax = Math.Max(posMax, pos);
 
             field[pos] = value;
         }
@@ -67,10 +67,10 @@ namespace simpleHexMap
                 }
 
                 //red line every 0x10000 (64 kB)
-                Pen pen = new Pen(Color.HotPink, 2);
-                for (int i=1; i < size / 0x10000 / divider; i++)
-                    graph.DrawLine(pen, 
-                        0, i* lineTop * scale, width * scale, i * lineTop * scale);
+                //Pen pen = new Pen(Color.HotPink, 2);
+                //for (int i=1; i < size / 0x10000 / divider; i++)
+                //    graph.DrawLine(pen, 
+                //        0, i* lineTop * scale, width * scale, i * lineTop * scale);
             }
 
             return bmp;
@@ -120,9 +120,10 @@ namespace simpleHexMap
             {
                 if (line[0] == ':')
                 {
-                    switch (Convert.ToInt32(line.Substring(7, 2), 16))
+                    int line_type = Convert.ToInt32(line.Substring(7, 2), 16);
+                    switch (line_type)
                     {
-                        case 0:
+                        case 0x00:
                             int addr = Convert.ToInt32(line.Substring(3, 4), 16);
                             int len = Convert.ToInt32(line.Substring(1, 2), 16);
 
@@ -130,8 +131,11 @@ namespace simpleHexMap
                                 Helper.PutPoint(offset + addr + i,
                                     Convert.ToByte(line.Substring(9 + i * 2, 2), 16));
                             break;
-                        case 2:
+                        case 0x02:
                             offset = Convert.ToInt32(line.Substring(9, 4), 16) * 16;
+                            break;
+                        case 0x04:
+                            offset = Convert.ToInt32(line.Substring(9, 4), 16) * 65536;
                             break;
                     }
                 }
